@@ -1,0 +1,39 @@
+# build用
+FROM node:18-alpine AS build
+
+WORKDIR /app
+
+COPY . /app
+
+RUN npm install && \
+    npm run build
+
+# runtime用
+FROM node:18-alpine AS runtime
+
+# 必要なパッケージをインストール
+RUN apk update && apk add bash
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+
+# 作業ディレクトリの作成と権限設定
+WORKDIR /app
+RUN chown -R appuser:appgroup /app
+
+COPY --chown=appuser:appgroup --from=build /app/dist /app/dist
+COPY --chown=appuser:appgroup ./docker-entrypoint-prod.sh ./
+COPY --chown=appuser:appgroup ./package.json ./
+COPY --chown=appuser:appgroup ./rds-ca-bundle.pem /app/rds-ca-bundle.pem
+
+# ポート公開
+EXPOSE 3000
+
+USER appuser
+
+# shellスクリプトに実行権限を与える
+RUN chmod +x ./docker-entrypoint-prod.sh && \ 
+    npm install
+
+# shellスクリプトを実行する
+CMD ["./docker-entrypoint-prod.sh"]

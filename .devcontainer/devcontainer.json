@@ -1,0 +1,45 @@
+{
+  "name": "Handson Secure Development",
+  "dockerComposeFile": [
+    "../compose.yaml",
+    "compose.codespaces.yaml"
+  ],
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/handson-secure-development",
+  "runServices": [
+    "workspace",
+    "mysql",
+    "inbucket",
+    "magnito",
+    "app",
+    "front"
+  ],
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [
+    3000,
+    5050,
+    5173,
+    9000
+  ],
+  "portsAttributes": {
+    "3000": {
+      "label": "Backend API"
+    },
+    "5050": {
+      "label": "Magnito"
+    },
+    "5173": {
+      "label": "Frontend"
+    },
+    "9000": {
+      "label": "Inbucket"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}

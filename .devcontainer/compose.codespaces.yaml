@@ -1,0 +1,21 @@
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm
+    command: sleep infinity
+    networks:
+      - default
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  app:
+    restart: unless-stopped
+    command:
+      - -c
+      - |
+        npm install
+        until npx typeorm-ts-node-commonjs migration:run -d ./src/database/AppDataSource.ts; do
+          echo "Migration failed. Retrying in 5 seconds..."
+          sleep 5
+        done
+        exec npm run dev

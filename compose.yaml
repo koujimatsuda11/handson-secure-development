@@ -1,0 +1,94 @@
+services:
+  mysql:
+    image: mysql:8.0
+    platform: linux/amd64
+    env_file: ./db/mysql.env
+    healthcheck:
+      test: [ 'CMD', 'mysqladmin', 'ping', '-h', 'localhost' ]
+      timeout: 20s
+      retries: 10
+    ports:
+      - '13306:3306'
+    volumes:
+      - ./db/conf:/etc/mysql/conf.d/
+      - db-store:/var/lib/mysql
+      - ./db/initdb.d:/docker-entrypoint-initdb.d
+
+  app:
+    build:
+      context: ./backend/
+      dockerfile: ./Dockerfile
+    environment:
+      - DEBUG=app:*
+      - STORAGE_TYPE=filesystem
+      - S3_BUCKET_ICONS=icons
+    tty: true
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./backend:/app
+      - app-storage:/app/storage
+    working_dir: /app
+    # 以下のcommandは、volumesをマウントして開発中にソースを常に反映させるために、マウント後に実行するコマンド
+    entrypoint:
+      - sh
+    command:
+      - -c
+      - |
+        npm install && npx typeorm-ts-node-commonjs migration:run -d ./src/database/AppDataSource.ts && npm run dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  front:
+    build:
+      context: ./front/
+      dockerfile: ./Dockerfile
+    environment:
+      - TZ=Asia/Tokyo
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./front:/app
+    working_dir: /app
+    command: /bin/sh -c '[ -f ~/.exec-once ] || { npm install && touch ~/.exec-once; } && npx vite --host 0.0.0.0'
+    expose:
+      - 5173
+  magnito:
+    image: frourio/magnito:latest
+    ports:
+      - 5050:5050 # Cognito API / Web interface
+      - 5051:5051 # OAuth2 SSL endpoint
+    environment:
+      PORT: 5050
+      SSL_PORT: 5051
+      COGNITO_USER_POOL_ID: ap-northeast-1_example
+      COGNITO_USER_POOL_CLIENT_ID: example-client-name
+      COGNITO_ACCESS_KEY: magnito-access-key
+      COGNITO_SECRET_KEY: magnito-secret-key
+      COGNITO_REGION: ap-northeast-1
+      SMTP_HOST: inbucket
+      SMTP_PORT: 2500
+      SMTP_USER: fake_mail_user
+      SMTP_PASS: fake_mail_password
+    volumes:
+      - magnito:/usr/src/app/data
+    depends_on:
+      inbucket:
+        condition: service_started
+        
+  inbucket:
+    image: inbucket/inbucket:3.0.3
+    ports:
+      - 2500:2500 # SMTP
+      - 9000:9000 # web interface
+    volumes:
+      - inbucket:/storage
+
+volumes:
+  db-store:
+  app-storage:
+  magnito:
+    driver: local
+  inbucket:
+    driver: local

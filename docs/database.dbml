@@ -1,0 +1,55 @@
+// T-1グランプリ SNS API データベース定義
+// Generated from TypeORM entities
+
+Table users {
+  id int [pk, increment, note: "ユーザーの一意のID"]
+  username varchar(255) [not null, unique, note: "cognitoから連携されたユーザー名"]
+  nickname varchar(255) [null, note: "ニックネーム"]
+  profile varchar(1024) [null, note: "プロフィール"]
+  registerd_at datetime [not null, default: "CURRENT_TIMESTAMP(6)", note: "ユーザ登録日時"]
+  
+  indexes {
+    username [unique]
+  }
+}
+
+Table posts {
+  id int [pk, increment, note: "投稿の一意のID"]
+  content varchar(255) [not null, note: "投稿内容"]
+  type enum('post') [not null, default: 'post', note: "投稿タイプ"]
+  posted_at datetime [not null, default: "CURRENT_TIMESTAMP(6)", note: "投稿日時"]
+  userId int [not null, ref: > users.id, note: "投稿者のID"]
+}
+
+Table posts_users_users {
+  postsId int [pk, ref: > posts.id, note: "投稿ID"]
+  usersId int [pk, ref: > users.id, note: "ユーザーID（いいねした人）"]
+  
+  indexes {
+    postsId
+    usersId
+    (postsId, usersId) [pk]
+  }
+}
+
+// リレーション定義
+Ref: posts.userId > users.id [delete: no action, update: no action]
+Ref: posts_users_users.postsId > posts.id [delete: cascade, update: cascade]
+Ref: posts_users_users.usersId > users.id [delete: no action, update: no action]
+
+// データベース設定
+Project "T-1グランプリ SNS API" {
+  database_type: 'MySQL'
+  Note: '''
+    # データベース設定
+    - ENGINE: InnoDB
+    - DEFAULT CHARSET: utf8mb4
+    - COLLATE: utf8mb4_general_ci
+    - TIMEZONE: UTC
+    
+    # 機能概要
+    - ユーザー管理（AWS Cognito連携）
+    - 投稿機能
+    - いいね機能（多対多）
+  '''
+}
