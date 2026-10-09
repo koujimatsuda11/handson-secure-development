@@ -10,7 +10,7 @@
 このハンズオンでは、テンプレートリポジトリから自身のリポジトリを作成して、そのリポジトリで受講をしていただきます。必ず、ご自身のオーガニゼーションにリポジトリを作成してください。
 
 1. テンプレートリポジトリからリポジトリを作成する  
-[テンプレートリポジトリ](https://github.com/new?template_name=handson-secure-development&template_owner=k-matsuda-kdl)
+[テンプレートリポジトリ](https://github.com/new?template_name=handson-secure-development&template_owner=koujimatsuda11)
 
 
 2. 下図の画面が開いたら、`Repository name`を入力します。好きな名前にしてください。
